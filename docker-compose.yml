@@ -6,6 +6,9 @@ services:
     volumes:
       - .:/app
       - ./models:/app/models
+    environment:
+      - HF_HOME=/app/models
+      - TRANSFORMERS_CACHE=/app/models
     env_file:
       - .env
     restart: unless-stopped
