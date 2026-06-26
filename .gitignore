@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .env
 models/
+chroma_data/
 .pytest_cache/
 .ruff_cache/
 dist/

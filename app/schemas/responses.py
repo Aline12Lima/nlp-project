@@ -27,3 +27,19 @@ class EmbeddingResponse(BaseModel):
     text: str
     embedding: List[float]
     dimensions: int
+
+class DocumentResponse(BaseModel):
+    id: str
+    text: str
+    status: str = "added"
+
+class SearchResult(BaseModel):
+    id: str
+    text: str
+    distance: float
+    metadata: dict
+
+class SearchResponse(BaseModel):
+    query: str
+    results: List[SearchResult]
+    total: int

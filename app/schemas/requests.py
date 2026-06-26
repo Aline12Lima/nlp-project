@@ -19,3 +19,11 @@ class TranslationRequest(BaseModel):
             "examples": [{"text": "I love this product!", "source": "en"}]
         }
     }
+
+class DocumentRequest(BaseModel):
+    text: str
+    metadata: dict = {}
+
+class SearchRequest(BaseModel):
+    query: str
+    top_k: int = 3

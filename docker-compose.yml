@@ -6,6 +6,7 @@ services:
     volumes:
       - .:/app
       - ./models:/app/models
+      - ./chroma_data:/app/chroma_data
     environment:
       - HF_HOME=/app/models
       - TRANSFORMERS_CACHE=/app/models
