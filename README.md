@@ -4,10 +4,8 @@ NLP Portfolio API é uma plataforma de processamento de linguagem natural constr
 (Hands-on ML cap 16)
 > Pipeline de NLP com FastAPI, HuggingFace e Docker — projeto de portfólio em construção.
 
-![Python](https://img.shields.io/badge/Python-3.11-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-green)
-![Docker](https://img.shields.io/badge/Docker-ready-blue)
-![Tests](https://img.shields.io/badge/tests-6%20passed-brightgreen)
+FastAPI | HuggingFace | Docker | ChromaDB | PostgreeSQL | n8n 
+
 
 ---
 

@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     HF_MODEL_EMBEDDINGS: str = "sentence-transformers/all-MiniLM-L6-v2"
     HF_CACHE_DIR: str = "./models"
 
+    # Banco de dados
+    DATABASE_URL: str = "postgresql://nlp_user:nlp_pass@postgres:5432/nlp_db"
+    
+    # Cache Redis
+    REDIS_URL: str = "redis://redis:6379/0"
+
     class Config:
         env_file = ".env"
 

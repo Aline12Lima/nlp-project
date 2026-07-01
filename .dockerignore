@@ -1,0 +1,12 @@
+postgres_data/
+chroma_data/
+redis_data/
+models/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.git/
+.env
+.vscode/
+.idea/
