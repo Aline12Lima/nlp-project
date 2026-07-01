@@ -35,6 +35,10 @@ jobs:
   tests:
     name: Testes (pytest)
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "sqlite:///./test.db"
+      REDIS_URL: "redis://localhost:6379/0"
+      PYTHONPATH: "."
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -52,4 +56,5 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Roda os testes
-        run: pytest app/tests/ -v
+        working-directory: ${{ github.workspace }}
+        run: python -m pytest app/tests/ -v
