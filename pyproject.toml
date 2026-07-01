@@ -1,0 +1,40 @@
+[project]
+name = "nlp-portfolio"
+version = "0.1.0"
+description = "Pipeline de NLP com FastAPI, HuggingFace e Docker"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    ".git",
+    "__pycache__",
+    "models",
+    "chroma_data",
+    "postgres_data",
+    "redis_data",
+    ".venv",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # erros do pycodestyle
+    "F",   # erros do pyflakes
+    "W",   # avisos do pycodestyle
+    "I",   # imports desordenados (isort)
+    "B",   # bugs comuns (bugbear)
+    "UP",  # sintaxe moderna
+]
+ignore = [
+    "E501",  # linha muito longa (deixa o formatter cuidar)
+    "B008",  # chamada de função em argumento default (comum no FastAPI Depends)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["app/tests"]

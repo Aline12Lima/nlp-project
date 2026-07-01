@@ -1,8 +1,10 @@
-import chromadb
-from chromadb.config import Settings as ChromaSettings
-from app.models.hf_loader import get_embeddings_model
 import logging
 import uuid
+
+import chromadb
+from chromadb.config import Settings as ChromaSettings
+
+from app.models.hf_loader import get_embeddings_model
 
 logger = logging.getLogger(__name__)
 

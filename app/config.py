@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     # Banco de dados
     DATABASE_URL: str = "postgresql://nlp_user:nlp_pass@postgres:5432/nlp_db"
-    
+
     # Cache Redis
     REDIS_URL: str = "redis://redis:6379/0"
 

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+
 from app.database.connection import get_db
 from app.services.history_service import get_history
 
@@ -14,9 +14,8 @@ router = APIRouter()
 )
 def list_history(
     limit: int = Query(10, ge=1, le=100, description="Quantidade de registros (1 a 100)"),
-    operation: Optional[str] = Query(
-        None,
-        description="Filtra por tipo de operação (sentiment, ner, translate, embeddings)"
+    operation: str | None = Query(
+        None, description="Filtra por tipo de operação (sentiment, ner, translate, embeddings)"
     ),
     db: Session = Depends(get_db),
 ):

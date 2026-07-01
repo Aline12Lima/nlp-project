@@ -1,20 +1,21 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+from app.database.connection import get_db
+from app.models.hf_loader import (
+    get_embeddings_model,
+    get_ner_model,
+    get_sentiment_model,
+    get_translation_model,
+)
 from app.schemas.requests import TextRequest, TranslationRequest
 from app.schemas.responses import (
-    SentimentResponse,
-    NERResponse,
-    EntityResponse,
-    TranslationResponse,
     EmbeddingResponse,
+    EntityResponse,
+    NERResponse,
+    SentimentResponse,
+    TranslationResponse,
 )
-from app.models.hf_loader import (
-    get_sentiment_model,
-    get_ner_model,
-    get_translation_model,
-    get_embeddings_model,
-)
-from app.database.connection import get_db
 from app.services.history_service import save_history
 from app.services.redis_service import get_cached, set_cached
 
@@ -63,7 +64,7 @@ def analyze_sentiment(body: TextRequest, db: Session = Depends(get_db)):
         save_history(db, "sentiment", body.text, response.model_dump())
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post(
@@ -114,7 +115,7 @@ def extract_entities(body: TextRequest, db: Session = Depends(get_db)):
         save_history(db, "ner", body.text, response.model_dump())
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post(
@@ -159,7 +160,7 @@ def translate_text(body: TranslationRequest, db: Session = Depends(get_db)):
         save_history(db, "translate", body.text, response.model_dump())
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post(
@@ -199,4 +200,4 @@ def generate_embeddings(body: TextRequest, db: Session = Depends(get_db)):
         save_history(db, "embeddings", body.text, {"dimensions": len(vector)})
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

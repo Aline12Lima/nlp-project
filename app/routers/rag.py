@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
+
 from app.schemas.requests import DocumentRequest, SearchRequest
 from app.schemas.responses import DocumentResponse, SearchResponse, SearchResult
-from app.services.chroma_service import add_document, search_documents, count_documents
+from app.services.chroma_service import add_document, count_documents, search_documents
 
 router = APIRouter()
 
@@ -32,7 +33,7 @@ def add_doc(body: DocumentRequest):
         doc_id = add_document(body.text, body.metadata)
         return DocumentResponse(id=doc_id, text=body.text)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post(
@@ -71,7 +72,7 @@ def search(body: SearchRequest):
             total=len(results),
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get(

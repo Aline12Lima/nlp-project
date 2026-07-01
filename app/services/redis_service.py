@@ -1,8 +1,10 @@
-import redis
-import json
 import hashlib
-from app.config import settings
+import json
 import logging
+
+import redis
+
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +60,10 @@ def get_stats() -> dict:
         "cache_hits": info.get("keyspace_hits", 0),
         "cache_misses": info.get("keyspace_misses", 0),
         "hit_rate": round(
-            info.get("keyspace_hits", 0) / max(1, info.get("keyspace_hits", 0) + info.get("keyspace_misses", 0)) * 100,
-            2
+            info.get("keyspace_hits", 0)
+            / max(1, info.get("keyspace_hits", 0) + info.get("keyspace_misses", 0))
+            * 100,
+            2,
         ),
     }
 

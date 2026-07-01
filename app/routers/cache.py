@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from app.services.redis_service import get_stats, clear_cache
+
+from app.services.redis_service import clear_cache, get_stats
 
 router = APIRouter()
 
@@ -29,7 +30,7 @@ def cache_stats():
     try:
         return get_stats()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete(
@@ -56,4 +57,4 @@ def cache_clear():
         deleted = clear_cache()
         return {"deleted_keys": deleted, "status": "cleared"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

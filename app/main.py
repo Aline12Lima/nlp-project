@@ -1,20 +1,22 @@
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.responses import HTMLResponse
-from fastapi import FastAPI
-from contextlib import asynccontextmanager
-from app.routers import health, nlp, rag, history, cache
+
 from app.config import settings
-from app.models.hf_loader import (
-    get_sentiment_model,
-    get_ner_model,
-    get_translation_model,
-    get_embeddings_model,
-)
-from app.services.chroma_service import get_chroma_client
-from app.services.redis_service import get_redis_client
 from app.database.connection import engine
 from app.database.models import Base
-import logging
+from app.models.hf_loader import (
+    get_embeddings_model,
+    get_ner_model,
+    get_sentiment_model,
+    get_translation_model,
+)
+from app.routers import cache, health, history, nlp, rag
+from app.services.chroma_service import get_chroma_client
+from app.services.redis_service import get_redis_client
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -49,26 +51,20 @@ Modelos HuggingFace são carregados no startup e mantidos em memória.
 """
 
 TAGS_METADATA = [
-    {
-        "name": "health",
-        "description": "Endpoints de verificação de saúde da API"
-    },
+    {"name": "health", "description": "Endpoints de verificação de saúde da API"},
     {
         "name": "nlp",
-        "description": "Modelos de processamento de linguagem natural (sentimento, NER, tradução, embeddings). Resultados são cacheados no Redis."
+        "description": "Modelos de processamento de linguagem natural (sentimento, NER, tradução, embeddings). Resultados são cacheados no Redis.",
     },
     {
         "name": "rag",
-        "description": "Retrieval-Augmented Generation: adicionar documentos e buscar por similaridade semântica usando ChromaDB."
+        "description": "Retrieval-Augmented Generation: adicionar documentos e buscar por similaridade semântica usando ChromaDB.",
     },
     {
         "name": "history",
-        "description": "Histórico persistente de todas as operações realizadas, armazenado no PostgreSQL."
+        "description": "Histórico persistente de todas as operações realizadas, armazenado no PostgreSQL.",
     },
-    {
-        "name": "cache",
-        "description": "Estatísticas e gerenciamento do cache Redis."
-    }
+    {"name": "cache", "description": "Estatísticas e gerenciamento do cache Redis."},
 ]
 
 
@@ -119,3 +115,14 @@ async def custom_redoc():
         title=app.title + " - ReDoc",
         redoc_js_url="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js",
     )
+
+
+@app.get("/", tags=["health"], summary="Informacoes basicas da API")
+def root():
+    """Retorna informacoes gerais sobre a API."""
+    return {
+        "name": "NLP Portfolio API",
+        "version": settings.APP_VERSION,
+        "docs": "/docs",
+        "redoc": "/redoc",
+    }
