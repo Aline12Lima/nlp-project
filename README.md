@@ -364,3 +364,119 @@ MIT
 | GitHub Actions | — | CI/CD |
 
 ### Arquitetura da Fase 3
+┌──────────────────────────────────────────────┐
+│         FastAPI (porta 8000)                 │
+│  ┌──────────┬──────────┬─────────┬────────┐  │
+│  │   NLP    │   RAG    │ History │ Cache  │  │
+│  └────┬─────┴────┬─────┴────┬────┴───┬────┘  │
+│       │          │          │        │       │
+│  ┌────▼──────────▼──────────▼────────▼────┐  │
+│  │ 4 modelos HF │ Chroma │ SQLAlc │ Redis │  │
+│  └──────────────┴────────┴────────┴───────┘  │
+└──────────────┬─────────────┬────────┬────────┘
+│             │        │
+┌──────▼──┐   ┌──────▼──┐  ┌──▼──────┐
+│ChromaDB │   │Postgres │  │  Redis  │
+│(embark) │   │container│  │container│
+└─────────┘   └─────────┘  └─────────┘
+┌──────────────────────────┐
+│  n8n (porta 5678)        │
+│  Workflow publicado:     │
+│  Webhook → API → Response│
+└──────────────────────────┘
+
+### Endpoints adicionados na Fase 3
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/cache/stats` | Estatísticas do cache (hits, misses, hit rate) |
+| DELETE | `/cache/clear` | Limpa todas as chaves de cache |
+| GET | `/redoc` | Documentação alternativa em interface ReDoc |
+
+### Como o cache funciona
+
+Todas as operações NLP (exceto embeddings) passam por cache antes de rodar o modelo:
+
+1. Requisição chega com um texto
+2. API gera uma chave SHA256 do texto + operação
+3. Consulta o Redis:
+   - **Cache HIT** → retorna resultado armazenado (dezenas de ms)
+   - **Cache MISS** → roda o modelo, salva no Redis com TTL de 1h, retorna
+
+Embeddings ficam fora do cache porque vetores de 384 dimensões ocupam muita memória e são pouco reutilizados.
+
+### Exemplo prático — comparando com e sem cache
+
+```bash
+# Primeira chamada (roda o modelo)
+$ time curl -X POST http://localhost:8000/nlp/sentiment \
+    -H "Content-Type: application/json" \
+    -d '{"text": "I love this project!"}'
+{"text":"I love this project!","label":"positive","score":0.985}
+real    0m0,911s
+
+# Segunda chamada (vem do cache)
+$ time curl -X POST http://localhost:8000/nlp/sentiment \
+    -H "Content-Type: application/json" \
+    -d '{"text": "I love this project!"}'
+{"text":"I love this project!","label":"positive","score":0.985}
+real    0m0,049s
+
+# Estatísticas do cache
+$ curl http://localhost:8000/cache/stats
+{"total_keys":1,"cache_hits":1,"cache_misses":1,"hit_rate":50.0}
+```
+
+### Workflow n8n
+
+O n8n roda em container separado e conversa com a API através do IP do gateway Docker. O workflow publicado "Análise de Sentimento" possui 3 nós:
+Testável via:
+```bash
+curl -X POST http://localhost:5678/webhook/analisar-sentimento \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Amazing NLP pipeline!"}'
+```
+
+### Documentação enriquecida
+
+Duas interfaces de documentação estão disponíveis:
+
+- **`/docs`** — Swagger UI clássico, ótimo para testar endpoints interativamente
+- **`/redoc`** — ReDoc com layout de dois painéis, ótimo para leitura e apresentação
+
+Ambas são geradas automaticamente a partir de docstrings, schemas Pydantic e metadados no código. Cada endpoint documenta:
+
+- Casos de uso e fluxo interno
+- Modelo HuggingFace utilizado
+- Códigos de resposta possíveis (200, 422, 500)
+- Exemplos prontos de request e response
+
+### CI automatizado
+
+A cada push (`main` ou `feature/**`), o GitHub Actions dispara:
+
+- **Job Lint (ruff)** — verifica erros e formatação de código Python
+
+Regras configuradas no `pyproject.toml`:
+- Limite de 100 caracteres por linha
+- Imports ordenados automaticamente (isort)
+- Detecção de bugs comuns (bugbear)
+- Sintaxe moderna Python (`X | Y` em vez de `Optional[X]`)
+
+Testes com pytest continuam sendo executados localmente via `docker compose exec api pytest app/tests/ -v` e serão expandidos no CI completo da Fase 4.
+
+### Variáveis de ambiente adicionadas
+
+| Variável | Padrão | Descrição |
+|----------|--------|-----------|
+| `REDIS_URL` | `redis://redis:6379/0` | Conexão do cache Redis |
+
+### Itens da Fase 3 adiados
+
+- **Integração Telegram/Slack** — o Telegram apresentou limitações técnicas rodando localmente (n8n local não recebe callbacks públicos do Telegram). Será integrado após o deploy em produção da Fase 4, quando o n8n tiver URL pública acessível pelo bot
+
+### Notas técnicas
+
+- **Comunicação entre containers Docker distintos**: n8n e API rodam em redes Docker separadas. O n8n acessa a API através do IP do gateway Docker (`docker exec pipeline_n8n ip route | grep default`)
+- **Fluxo Git**: features são desenvolvidas em branches próprias (`feature/*`), commitadas com mensagens convencionais e mergeadas para main via fast-forward
+- **Chave de cache**: SHA256 do texto + operação. Evita chaves gigantes e resolve problemas com caracteres especiais/acentuação

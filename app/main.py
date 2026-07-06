@@ -1,5 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_redoc_html
@@ -100,6 +101,8 @@ app = FastAPI(
     },
     lifespan=lifespan,
 )
+
+Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
 app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(nlp.router, prefix="/nlp", tags=["nlp"])
