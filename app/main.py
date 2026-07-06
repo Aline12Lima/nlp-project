@@ -1,10 +1,10 @@
 import logging
 from contextlib import asynccontextmanager
-from prometheus_fastapi_instrumentator import Instrumentator
 
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.responses import HTMLResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.config import settings
 from app.database.connection import engine
