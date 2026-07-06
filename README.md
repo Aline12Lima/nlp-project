@@ -14,17 +14,14 @@ FastAPI | HuggingFace | Docker | ChromaDB | PostgreeSQL | n8n
 API REST para processamento de linguagem natural (NLP) construída com FastAPI e modelos pré-treinados do HuggingFace. O projeto segue um roadmap de 4 fases, evoluindo de um esqueleto básico até um pipeline completo com RAG, orquestração e deploy em produção.
 
 ---
-
 ## Roadmap
 
 | Fase | Período | Descrição | Status |
 |------|---------|-----------|--------|
 | 1 | Semanas 1–2 | Setup, FastAPI, Docker, primeiro modelo HF | ✅ Concluída |
 | 2 | Semanas 3–4 | Pipeline NLP completo, RAG com ChromaDB, PostgreSQL | ✅ Concluída |
-| 3 | Semanas 5–6 | Orquestração n8n, Redis, Slack/Telegram | 🔄 Em andamento |
-| 4 | Semanas 7–8 | MLOps, CI/CD, Prometheus, deploy Railway/Fly.io | ⏳ Pendente |
-
----
+| 3 | Semanas 5–6 | Orquestração n8n, Redis, Swagger enriquecido | ✅ Concluída |
+| 4 | Semanas 7–8 | MLOps, CI/CD, Prometheus, deploy Railway/Fly.io | 🔄 Em andamento |
 
 ## Fase 1 — Setup e base
 
@@ -340,3 +337,30 @@ docker compose up --build
 ## Licença
 
 MIT
+
+---
+
+## Fase 3 — Orquestração e integrações
+
+### O que foi construído
+
+- **Workflow n8n integrado à API** — orquestração visual conectando webhook externo → chamada à API → resposta formatada
+- **Redis como camada de cache** — resultados de operações NLP armazenados em memória com TTL de 1 hora
+- **Ganho de performance mensurável** — segundas chamadas ~18x mais rápidas (911ms → 49ms) por evitar recomputar modelos de IA
+- **Endpoints de administração de cache** — visualização de estatísticas (hit rate) e limpeza manual
+- **Documentação Swagger enriquecida** — descrição rica da API, tags organizadas, exemplos prontos em cada endpoint, response models detalhados
+- **Interface ReDoc adicional** — documentação secundária em `/redoc` com layout de dois painéis
+- **CI com lint automático** — GitHub Actions rodando ruff a cada push, garantindo qualidade do código
+- **Fluxo Git profissional** — branches feature/*, commits convencionais, merge para main
+
+### Stack adicionada
+
+| Tecnologia | Versão | Uso |
+|-----------|--------|-----|
+| Redis | 7-alpine | Cache em memória |
+| redis (Python) | 5.0.1 | Cliente Redis |
+| n8n | latest | Automação visual de workflows |
+| ruff | 0.4.4 | Linter e formatador Python |
+| GitHub Actions | — | CI/CD |
+
+### Arquitetura da Fase 3
