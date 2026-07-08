@@ -1,482 +1,393 @@
-# NLP Portfolio API
+<div align="center">
 
-NLP Portfolio API é uma plataforma de processamento de linguagem natural construída como serviço REST, projetada para receber texto bruto e devolver análises estruturadas: sentimento, entidades nomeadas, tradução e vetores semânticos. Além das análises pontuais, a API mantém uma memória semântica via ChromaDB (permitindo busca por significado em vez de palavras-chave) e registra o histórico de cada operação em PostgreSQL. O objetivo é demonstrar, na prática, como integrar múltiplos modelos de IA pré-treinados em uma arquitetura modular, conteinerizada e pronta para escalar — servindo tanto como base para aplicações reais (chatbots, classificadores, motores de busca semântica) quanto como portfólio técnico de engenharia de ML.
-(Hands-on ML cap 16)
-> Pipeline de NLP com FastAPI, HuggingFace e Docker — projeto de portfólio em construção.
+# 🤖 NLP Portfolio API
 
-FastAPI | HuggingFace | Docker | ChromaDB | PostgreeSQL | n8n 
+### API de IA construída do zero: 4 modelos ML, RAG, cache e CI/CD em produção
 
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Railway](https://img.shields.io/badge/Railway-Deployed-131415?style=for-the-badge&logo=railway&logoColor=white)
+
+![CI Status](https://github.com/Aline12Lima/nlp-project/actions/workflows/ci.yml/badge.svg)
+![Docker Pulls](https://img.shields.io/docker/pulls/aline12limaai/nlp-portfolio?style=flat-square&logo=docker)
+![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+
+### 🌐 [Testar a API em Produção](https://nlp-project-production-4cc9.up.railway.app/docs)
+
+</div>
 
 ---
 
-## Sobre o projeto
+## 📖 Sobre o projeto
 
-API REST para processamento de linguagem natural (NLP) construída com FastAPI e modelos pré-treinados do HuggingFace. O projeto segue um roadmap de 4 fases, evoluindo de um esqueleto básico até um pipeline completo com RAG, orquestração e deploy em produção.
+Pipeline completo de processamento de linguagem natural (NLP) construído do zero para portfólio, demonstrando habilidades de **engenharia de ML em produção**. A API integra 4 modelos pré-treinados do HuggingFace, implementa busca semântica (RAG) com ChromaDB, cache inteligente com Redis (18x speedup mensurado), histórico persistente em PostgreSQL, e é entregue via CI/CD completo com deploy automatizado.
+
+O projeto foi desenvolvido em **4 fases estruturadas**, cada uma com sua própria complexidade técnica, seguindo o padrão profissional de branches Git e conventional commits. Desafios reais foram enfrentados durante o desenvolvimento — desde conflitos de dependências até otimização de memória em produção — todos documentados na seção **Desafios e Soluções**.
 
 ---
-## Roadmap
 
-| Fase | Período | Descrição | Status |
-|------|---------|-----------|--------|
-| 1 | Semanas 1–2 | Setup, FastAPI, Docker, primeiro modelo HF | ✅ Concluída |
-| 2 | Semanas 3–4 | Pipeline NLP completo, RAG com ChromaDB, PostgreSQL | ✅ Concluída |
-| 3 | Semanas 5–6 | Orquestração n8n, Redis, Swagger enriquecido | ✅ Concluída |
-| 4 | Semanas 7–8 | MLOps, CI/CD, Prometheus, deploy Railway/Fly.io | 🔄 Em andamento |
+## 🚀 Testando em produção
 
-## Fase 1 — Setup e base
+A API está no ar 24/7:
 
-### O que foi construído
+| Interface | URL |
+|-----------|-----|
+| 📘 **Swagger UI (interativo)** | [/docs](https://nlp-project-production-4cc9.up.railway.app/docs) |
+| 📗 **ReDoc (leitura)** | [/redoc](https://nlp-project-production-4cc9.up.railway.app/redoc) |
+| ❤️ **Health Check** | [/health/](https://nlp-project-production-4cc9.up.railway.app/health/) |
+| 📊 **Métricas Prometheus** | [/metrics](https://nlp-project-production-4cc9.up.railway.app/metrics) |
 
-- Estrutura de projeto profissional com separação de responsabilidades
-- API REST com FastAPI e documentação Swagger automática
-- Containerização completa com Docker e docker-compose
-- Integração com modelo HuggingFace de análise de sentimento
-- Suite de testes com pytest usando mocks
-- Git com conventional commits
+### Exemplo rápido — análise de sentimento
 
-### Stack utilizada
-
-| Tecnologia | Versão | Uso |
-|-----------|--------|-----|
-| Python | 3.11 | Linguagem base |
-| FastAPI | 0.111 | Framework web |
-| Uvicorn | 0.29 | Servidor ASGI |
-| HuggingFace Transformers | 4.41 | Modelos de NLP |
-| PyTorch | 2.3 | Backend dos modelos |
-| Pydantic | 2.7 | Validação de dados |
-| Docker | — | Containerização |
-| pytest | 9.1 | Testes automatizados |
-
-### Modelo integrado
-
-**cardiffnlp/twitter-roberta-base-sentiment-latest**
-- Tarefa: classificação de sentimento
-- Labels: `positive`, `neutral`, `negative`
-- Score: probabilidade de 0 a 1
-
-### Estrutura de pastas
-
-```
-nlp-portfolio/
-├── app/
-│   ├── main.py              # Entrypoint da aplicação
-│   ├── config.py            # Configurações via .env
-│   ├── routers/
-│   │   ├── health.py        # Endpoint de health check
-│   │   └── nlp.py           # Endpoints de NLP
-│   ├── models/
-│   │   └── hf_loader.py     # Carregamento dos modelos HF
-│   ├── schemas/
-│   │   ├── requests.py      # Modelos de entrada
-│   │   └── responses.py     # Modelos de saída
-│   └── tests/
-│       └── test_api.py      # Testes automatizados
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-├── requirements-dev.txt
-└── .env.example
-```
-
-### Endpoints disponíveis
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/` | Informações da API |
-| GET | `/health/` | Health check |
-| POST | `/nlp/sentiment` | Análise de sentimento |
-| GET | `/docs` | Documentação Swagger |
-
-### Exemplo de uso
-
-**Request:**
 ```bash
-curl -X POST http://localhost:8000/nlp/sentiment \
+curl -X POST https://nlp-project-production-4cc9.up.railway.app/nlp/sentiment \
   -H "Content-Type: application/json" \
-  -d '{"text": "I love this product!"}'
+  -d '{"text": "This project is amazing!"}'
 ```
 
-**Response:**
+**Resposta:**
 ```json
 {
-  "text": "I love this product!",
+  "text": "This project is amazing!",
   "label": "positive",
-  "score": 0.9823
+  "score": 0.9861
 }
 ```
 
-### Testes
-
-```bash
-# Rodar os testes dentro do container
-docker compose exec api pytest app/tests/ -v
-```
-
-Resultado da Fase 1:
-```
-6 passed in 3.54s
-```
+> 💡 A primeira chamada de cada endpoint pode demorar ~30s (lazy loading dos modelos). Chamadas seguintes retornam em milissegundos.
 
 ---
 
-## Fase 2 — Pipeline NLP completo
+## 🧰 Stack técnico
 
-### O que foi construído
+### Backend & API
+- **[Python 3.11](https://www.python.org/)** — linguagem principal
+- **[FastAPI](https://fastapi.tiangolo.com/)** — framework web assíncrono
+- **[Uvicorn](https://www.uvicorn.org/)** — servidor ASGI
+- **[Pydantic](https://docs.pydantic.dev/)** — validação de dados
 
-- 3 novos modelos HuggingFace integrados (NER, Tradução e Embeddings) totalizando **4 modelos** pré-carregados no startup
-- **ChromaDB** como banco vetorial embarcado para busca semântica e RAG
-- **PostgreSQL** como container separado para histórico persistente de operações
-- Camada de serviços (`app/services/`) para isolar lógica de negócio
-- Camada de banco de dados (`app/database/`) com SQLAlchemy ORM
-- 7 novos endpoints documentados via Swagger
-- Volumes Docker persistentes para modelos, ChromaDB e PostgreSQL
-- Variáveis de ambiente do HuggingFace (`HF_HOME`) para cache compartilhado
+### Machine Learning & NLP
+- **[HuggingFace Transformers](https://huggingface.co/docs/transformers)** — modelos pré-treinados
+- **[PyTorch](https://pytorch.org/)** — backend ML (CPU-only)
+- **[sentence-transformers](https://www.sbert.net/)** — geração de embeddings
 
-### Stack adicionada
+### Persistência
+- **[PostgreSQL 16](https://www.postgresql.org/)** — banco relacional (histórico)
+- **[Redis 7](https://redis.io/)** — cache em memória
+- **[ChromaDB](https://www.trychroma.com/)** — banco vetorial (RAG)
+- **[SQLAlchemy 2](https://www.sqlalchemy.org/)** — ORM
 
-| Tecnologia | Versão | Uso |
-|-----------|--------|-----|
-| sentence-transformers | 2.7 | Geração de embeddings |
-| sentencepiece | 0.2 | Tokenização da tradução |
-| numpy | 1.23.5 | Fixado para compatibilidade com chroma-hnswlib |
-| ChromaDB | 0.5 | Banco vetorial para RAG |
-| PostgreSQL | 16-alpine | Banco relacional |
-| SQLAlchemy | 2.0 | ORM Python |
-| psycopg2-binary | 2.9 | Driver PostgreSQL |
+### DevOps & Infraestrutura
+- **[Docker](https://www.docker.com/)** — containerização (multi-stage build)
+- **[Docker Compose](https://docs.docker.com/compose/)** — orquestração local
+- **[Docker Hub](https://hub.docker.com/r/aline12limaai/nlp-portfolio)** — registry de imagens
+- **[Railway](https://railway.app/)** — deploy em produção
+- **[GitHub Actions](https://github.com/features/actions)** — CI/CD
+- **[Prometheus](https://prometheus.io/)** — métricas
+- **[Ruff](https://docs.astral.sh/ruff/)** — lint e formatação
 
-### Modelos integrados nesta fase
+### Qualidade & Testes
+- **[Pytest](https://pytest.org/)** — testes automatizados
+- **Conventional Commits** — padronização Git
+- **Git Flow** — branches feature/*, merge para main
 
-| Tarefa | Modelo HuggingFace |
-|--------|-------------------|
-| NER (entidades nomeadas) | `dbmdz/bert-large-cased-finetuned-conll03-english` |
-| Tradução EN→PT | `Helsinki-NLP/opus-mt-tc-big-en-pt` |
-| Embeddings (384 dimensões) | `sentence-transformers/all-MiniLM-L6-v2` |
-
-### Arquitetura da Fase 2
-
-```
-┌─────────────────────────────────────────┐
-│           FastAPI (porta 8000)          │
-│  ┌──────────┬──────────┬─────────────┐  │
-│  │   NLP    │   RAG    │   History   │  │
-│  │ routers  │  router  │   router    │  │
-│  └────┬─────┴────┬─────┴──────┬──────┘  │
-│       │          │            │         │
-│  ┌────▼─────┐ ┌──▼─────┐ ┌────▼─────┐   │
-│  │ 4 modelos│ │ Chroma │ │  SQLAlc  │   │
-│  │    HF    │ │Service │ │ History  │   │
-│  └──────────┘ └────┬───┘ └────┬─────┘   │
-└────────────────────┼──────────┼─────────┘
-                     │          │
-              ┌──────▼─────┐ ┌──▼─────────┐
-              │ ChromaDB   │ │ PostgreSQL │
-              │ (embarcado)│ │ container  │
-              └────────────┘ └────────────┘
-```
-
-### Estrutura de pastas atualizada
-
-```
-nlp-portfolio/
-├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── routers/
-│   │   ├── health.py
-│   │   ├── nlp.py             # 4 endpoints NLP com histórico
-│   │   ├── rag.py             # NOVO: documentos e busca
-│   │   └── history.py         # NOVO: listagem de histórico
-│   ├── models/
-│   │   └── hf_loader.py       # 4 modelos carregados no startup
-│   ├── schemas/
-│   │   ├── requests.py
-│   │   └── responses.py
-│   ├── services/              # NOVO
-│   │   ├── chroma_service.py  # Lógica do ChromaDB
-│   │   └── history_service.py # Lógica do histórico
-│   ├── database/              # NOVO
-│   │   ├── connection.py      # Engine e session SQLAlchemy
-│   │   └── models.py          # Tabela NLPHistory
-│   └── tests/
-├── chroma_data/               # Volume persistente do ChromaDB
-├── postgres_data/             # Volume persistente do PostgreSQL
-└── docker-compose.yml         # Agora com 2 serviços: api + postgres
-```
-
-### Endpoints da Fase 2
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/nlp/sentiment` | Análise de sentimento (com histórico) |
-| POST | `/nlp/ner` | Reconhecimento de entidades nomeadas |
-| POST | `/nlp/translate` | Tradução EN→PT |
-| POST | `/nlp/embeddings` | Geração de vetor semântico (384 dim) |
-| POST | `/rag/documents` | Adiciona documento ao banco vetorial |
-| POST | `/rag/search` | Busca semântica por similaridade |
-| GET | `/rag/stats` | Total de documentos indexados |
-| GET | `/history/` | Histórico de operações (filtrável) |
-
-### Exemplos de uso
-
-**NER:**
-```bash
-curl -X POST http://localhost:8000/nlp/ner \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Aline works at Google in São Paulo."}'
-```
-```json
-{
-  "text": "Aline works at Google in São Paulo.",
-  "entities": [
-    {"word": "Aline", "entity": "PER", "score": 0.9987, "start": 0, "end": 5},
-    {"word": "Google", "entity": "ORG", "score": 0.9991, "start": 15, "end": 21},
-    {"word": "São Paulo", "entity": "LOC", "score": 0.9978, "start": 25, "end": 34}
-  ]
-}
-```
-
-**Tradução EN→PT:**
-```bash
-curl -X POST http://localhost:8000/nlp/translate \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Hello, how are you today?", "source": "en"}'
-```
-```json
-{
-  "original": "Hello, how are you today?",
-  "translated": "Olá, como você está hoje?",
-  "source": "en",
-  "target": "pt"
-}
-```
-
-**Busca semântica (RAG):**
-```bash
-# Primeiro, adicionar documentos
-curl -X POST http://localhost:8000/rag/documents \
-  -H "Content-Type: application/json" \
-  -d '{"text": "FastAPI é um framework Python moderno e rápido.", "metadata": {"tema": "tecnologia"}}'
-
-# Depois, buscar por significado (não por palavras)
-curl -X POST http://localhost:8000/rag/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "linguagem de programação", "top_k": 2}'
-```
-
-A busca retorna documentos por **proximidade semântica**, mesmo sem palavras em comum com a query.
-
-**Histórico:**
-```bash
-# Todas as operações
-curl http://localhost:8000/history/?limit=10
-
-# Filtrar por tipo
-curl "http://localhost:8000/history/?operation=sentiment&limit=5"
-```
-
-### Variáveis de ambiente adicionadas
-
-| Variável | Padrão | Descrição |
-|----------|--------|-----------|
-| `HF_MODEL_NER` | `dbmdz/bert-large-cased-finetuned-conll03-english` | Modelo NER |
-| `HF_MODEL_TRANSLATION` | `Helsinki-NLP/opus-mt-tc-big-en-pt` | Modelo tradução |
-| `HF_MODEL_EMBEDDINGS` | `sentence-transformers/all-MiniLM-L6-v2` | Modelo embeddings |
-| `DATABASE_URL` | `postgresql://nlp_user:nlp_pass@postgres:5432/nlp_db` | URL do PostgreSQL |
-| `HF_HOME` | `/app/models` | Cache compartilhado HuggingFace |
-
-### Notas técnicas
-
-- **Persistência:** ChromaDB e PostgreSQL têm volumes mapeados (`./chroma_data` e `./postgres_data`), preservando dados entre reinícios dos containers
-- **Conflito de porta:** se houver outro PostgreSQL na porta 5432, o `docker-compose.yml` mapeia o nosso para `5433:5432` externamente; a comunicação interna entre containers continua via porta 5432
-- **Cache de modelos:** a primeira execução baixa ~2GB de modelos do HuggingFace; execuções subsequentes usam o cache local em `./models`
-- **Telemetria do ChromaDB:** os warnings `posthog telemetry` no startup são inofensivos e podem ser ignorados
+### Automação & Orquestração
+- **[n8n](https://n8n.io/)** — workflows visuais integrando a API
 
 ---
 
-## Como rodar localmente
+## 🏗️ Arquitetura
+┌─────────────────────────────────────────────────────┐
+│              🌐 FastAPI (0.0.0.0:8000)              │
+│  ┌──────────┬──────────┬────────┬──────┬────────┐   │
+│  │   NLP    │   RAG    │History │Cache │ Health │   │
+│  │ router   │ router   │ router │router│ router │   │
+│  └────┬─────┴────┬─────┴───┬────┴──┬───┴────────┘   │
+│       │          │         │       │                │
+│  ┌────▼──────────▼─────────▼───────▼─────┐          │
+│  │  Serviços (chroma, redis, history)    │          │
+│  └────┬──────────┬─────────┬─────────────┘          │
+│       │          │         │                        │
+└───────┼──────────┼─────────┼────────────────────────┘
+│          │         │
+┌────▼──┐   ┌──▼───┐  ┌──▼────┐
+│Chroma │   │Redis │  │Postgres│
+│  DB   │   │Cache │  │  DB   │
+└───────┘   └──────┘  └───────┘
+↑
+│ Ingestão de docs
+│
+┌────┴───────┐
+│ Embeddings │
+│ HuggingFace│
+└────────────┘
+**3 containers Docker orquestrados:**
+- `api` — FastAPI + Uvicorn + 4 modelos HuggingFace + ChromaDB embarcado
+- `postgres` — PostgreSQL 16 para histórico de operações
+- `redis` — Redis 7 para cache em memória
+
+---
+
+## 📸 Interface e visualização
+
+### Swagger UI (interativo)
+![Swagger em produção](docs/images/swagger.png)
+
+### ReDoc (documentação de leitura)
+![ReDoc em produção](docs/images/redoc.png)
+
+### Deploy no Railway
+![Railway com 3 serviços](docs/images/railway.png)
+
+### Docker Hub — Publicação automática via CI
+![Docker Hub tags](docs/images/docker-hub.png)
+
+### CI/CD verde no GitHub Actions
+![GitHub Actions](docs/images/github-actions.png)
+
+### Integração com n8n (workflow visual)
+![n8n workflow](docs/images/n8n-workflow.png)
+
+---
+
+## ⚡ Funcionalidades
+
+### 🧠 Modelos de IA (HuggingFace)
+
+| Tarefa | Modelo | Exemplo |
+|--------|--------|---------|
+| **Análise de sentimento** | `cardiffnlp/twitter-roberta-base-sentiment-latest` | "I love this!" → `positive (98.6%)` |
+| **NER (entidades nomeadas)** | `dbmdz/bert-large-cased-finetuned-conll03-english` | "Aline works at Google" → `PER, ORG` |
+| **Tradução EN→PT** | `Helsinki-NLP/opus-mt-tc-big-en-pt` | "Hello world" → `Olá mundo` |
+| **Embeddings semânticos** | `sentence-transformers/all-MiniLM-L6-v2` | Texto → vetor 384 dimensões |
+
+### 🔍 RAG (busca semântica)
+Adicione documentos e busque por **significado**, não por palavras-chave. Query "linguagem rápida" encontra "framework Python moderno" — sem palavras em comum, apenas similaridade semântica.
+
+### ⚡ Cache Redis
+Todas as operações NLP passam por cache antes de rodar o modelo. Segundas chamadas retornam em **~50ms** (vs ~900ms sem cache — **18x mais rápido**).
+
+### 📚 Histórico completo
+Toda operação é auditada no PostgreSQL: timestamp, tipo, texto de entrada, resultado JSON. Consultável via endpoint `/history/`.
+
+### 📊 Métricas Prometheus
+Endpoint `/metrics` exposto para integração com sistemas de monitoramento (contadores de requisições, latência p50/p95/p99, códigos de status).
+
+---
+
+## 🗺️ Roadmap — 4 fases estruturadas
+
+### ✅ Fase 1 — Setup e base (Semanas 1-2)
+- Estrutura profissional de pastas
+- FastAPI com Swagger automático
+- Containerização com Docker + docker-compose
+- Primeiro modelo HuggingFace integrado (sentimento)
+- Testes automatizados com pytest (6 testes)
+- Git com conventional commits
+- CI básico com lint (ruff)
+
+### ✅ Fase 2 — Pipeline NLP completo (Semanas 3-4)
+- +3 modelos HuggingFace (NER, tradução, embeddings)
+- **ChromaDB** como banco vetorial embarcado
+- **RAG** — busca por similaridade semântica
+- **PostgreSQL** como container separado
+- Camada de serviços (`app/services/`)
+- Camada de banco (`app/database/` com SQLAlchemy)
+- Volumes Docker persistentes
+
+### ✅ Fase 3 — Orquestração e integrações (Semanas 5-6)
+- Workflow **n8n** integrando webhook externo à API
+- **Redis** para cache (18x speedup mensurado)
+- Endpoints de administração de cache
+- Documentação Swagger enriquecida
+- **ReDoc** como interface alternativa
+
+### ✅ Fase 4 — MLOps e deploy (Semanas 7-8)
+- **Métricas Prometheus** (endpoint `/metrics`)
+- **Docker Hub** — publicação automática via CI
+- **Otimização Docker** — imagem reduzida em **76%** (9.6GB → 2.28GB) com multi-stage build e torch CPU-only
+- **CI/CD completo** — GitHub Actions com lint + testes + auto-publish
+- **Deploy Railway** com URL pública 24/7
+- Lazy loading dos modelos para economizar RAM
+
+---
+
+## 🐛 Desafios e soluções
+
+Bugs reais enfrentados e resolvidos durante o desenvolvimento. Este é o valor de construir um projeto de verdade, não seguir tutorial.
+
+### 1. `numpy 1.24` quebrou o ChromaDB
+**Sintoma:** `AttributeError: module 'numpy' has no attribute 'float'`
+**Causa:** `chroma-hnswlib` usava `np.float`, deprecated no numpy 1.24+
+**Solução:** Fixar `numpy==1.23.5` no `requirements.txt`
+
+### 2. Modelo `opus-mt-pt-en` foi removido do HuggingFace
+**Sintoma:** `HTTPError: 404 Not Found` ao baixar
+**Causa:** Modelo foi depreciado sem aviso
+**Solução:** Migrar para `Helsinki-NLP/opus-mt-tc-big-en-pt` e ajustar direção (EN→PT)
+
+### 3. Cache do HuggingFace duplicado
+**Sintoma:** Modelos baixavam em pastas diferentes a cada execução
+**Causa:** `HF_HOME` não estava definido
+**Solução:** Adicionar `HF_HOME=/app/models` no docker-compose
+
+### 4. Conflito de porta 5432 (PostgreSQL)
+**Sintoma:** `Bind for 0.0.0.0:5432 failed: port is already allocated`
+**Causa:** Container do n8n já usava a porta
+**Solução:** Mapear PostgreSQL para `5433:5432` externamente
+
+### 5. Pasta `app/models/` ignorada pelo Git
+**Sintoma:** `ModuleNotFoundError: No module named 'app.models'` em produção
+**Causa:** Regra `models/` no `.gitignore` (sem barra inicial) excluía qualquer pasta com esse nome
+**Solução:** Trocar por `/models/` (só a raiz) e forçar commit com `git add -f`
+
+### 6. Railway definia PORT 8080, API rodava na 8000
+**Sintoma:** "Application failed to respond" na URL pública
+**Causa:** Railway usa variável `PORT` dinâmica; o CMD do Dockerfile estava fixo em 8000
+**Solução:** Trocar CMD para `uvicorn ... --port ${PORT:-8000}` (aceita variável ou fallback)
+
+### 7. Out of Memory no Railway
+**Sintoma:** Container morria com "Killed" ao carregar modelos
+**Causa:** Free tier tem 512MB RAM; 4 modelos consomem ~4GB
+**Solução:** **Lazy loading** — modelos carregam sob demanda, não no startup
+
+### 8. Imagem Docker de 9.6GB
+**Sintoma:** Deploy lento, difícil compartilhar
+**Solução:** **Multi-stage build** + `torch` CPU-only + `.dockerignore` otimizado → **2.28GB (-76%)**
+
+---
+
+## 🏃 Como rodar localmente
 
 ### Pré-requisitos
-
-- Docker
-- Docker Compose
+- Docker + Docker Compose
 
 ### Passo a passo
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/SEU_USUARIO/nlp-portfolio.git
-cd nlp-portfolio
+git clone https://github.com/Aline12Lima/nlp-project.git
+cd nlp-project
 
-# 2. Copie o arquivo de variáveis de ambiente
+# 2. Crie o .env a partir do exemplo
 cp .env.example .env
 
 # 3. Suba os containers
 docker compose up --build
 
-# 4. Acesse a documentação
+# 4. Aguarde ~2-3 min na primeira execução (baixa modelos ~2GB)
+# Quando aparecer "Application startup complete", abra:
 # http://localhost:8000/docs
 ```
 
+### Testando
+
+```bash
+# Health check
+curl http://localhost:8000/health/
+
+# Análise de sentimento
+curl -X POST http://localhost:8000/nlp/sentiment \
+  -H "Content-Type: application/json" \
+  -d '{"text": "I love this project!"}'
+
+# Rodar testes
+docker compose exec api pytest app/tests/ -v
+```
+
+### Usando a imagem do Docker Hub (sem clonar)
+
+```bash
+docker pull aline12limaai/nlp-portfolio:latest
+docker run -p 8000:8000 aline12limaai/nlp-portfolio:latest
+```
+
 ---
 
-## Variáveis de ambiente
+## 📡 Endpoints principais
 
-| Variável | Padrão | Descrição |
-|----------|--------|-----------|
-| `APP_ENV` | `development` | Ambiente da aplicação |
-| `APP_VERSION` | `0.1.0` | Versão da API |
-| `HF_CACHE_DIR` | `./models` | Diretório de cache dos modelos |
-| `HF_MODEL_SENTIMENT` | `cardiffnlp/twitter-roberta-base-sentiment-latest` | Modelo de sentimento |
-| `HF_MODEL_NER` | `dbmdz/bert-large-cased-finetuned-conll03-english` | Modelo NER |
-| `HF_MODEL_TRANSLATION` | `Helsinki-NLP/opus-mt-tc-big-en-pt` | Modelo tradução |
-| `HF_MODEL_EMBEDDINGS` | `sentence-transformers/all-MiniLM-L6-v2` | Modelo embeddings |
-| `DATABASE_URL` | `postgresql://nlp_user:nlp_pass@postgres:5432/nlp_db` | Conexão PostgreSQL |
-
----
-
-## Licença
-
-MIT
-
----
-
-## Fase 3 — Orquestração e integrações
-
-### O que foi construído
-
-- **Workflow n8n integrado à API** — orquestração visual conectando webhook externo → chamada à API → resposta formatada
-- **Redis como camada de cache** — resultados de operações NLP armazenados em memória com TTL de 1 hora
-- **Ganho de performance mensurável** — segundas chamadas ~18x mais rápidas (911ms → 49ms) por evitar recomputar modelos de IA
-- **Endpoints de administração de cache** — visualização de estatísticas (hit rate) e limpeza manual
-- **Documentação Swagger enriquecida** — descrição rica da API, tags organizadas, exemplos prontos em cada endpoint, response models detalhados
-- **Interface ReDoc adicional** — documentação secundária em `/redoc` com layout de dois painéis
-- **CI com lint automático** — GitHub Actions rodando ruff a cada push, garantindo qualidade do código
-- **Fluxo Git profissional** — branches feature/*, commits convencionais, merge para main
-
-### Stack adicionada
-
-| Tecnologia | Versão | Uso |
-|-----------|--------|-----|
-| Redis | 7-alpine | Cache em memória |
-| redis (Python) | 5.0.1 | Cliente Redis |
-| n8n | latest | Automação visual de workflows |
-| ruff | 0.4.4 | Linter e formatador Python |
-| GitHub Actions | — | CI/CD |
-
-### Arquitetura da Fase 3
-┌──────────────────────────────────────────────┐
-│         FastAPI (porta 8000)                 │
-│  ┌──────────┬──────────┬─────────┬────────┐  │
-│  │   NLP    │   RAG    │ History │ Cache  │  │
-│  └────┬─────┴────┬─────┴────┬────┴───┬────┘  │
-│       │          │          │        │       │
-│  ┌────▼──────────▼──────────▼────────▼────┐  │
-│  │ 4 modelos HF │ Chroma │ SQLAlc │ Redis │  │
-│  └──────────────┴────────┴────────┴───────┘  │
-└──────────────┬─────────────┬────────┬────────┘
-│             │        │
-┌──────▼──┐   ┌──────▼──┐  ┌──▼──────┐
-│ChromaDB │   │Postgres │  │  Redis  │
-│(embark) │   │container│  │container│
-└─────────┘   └─────────┘  └─────────┘
-┌──────────────────────────┐
-│  n8n (porta 5678)        │
-│  Workflow publicado:     │
-│  Webhook → API → Response│
-└──────────────────────────┘
-
-### Endpoints adicionados na Fase 3
-
+### NLP (com cache)
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| GET | `/cache/stats` | Estatísticas do cache (hits, misses, hit rate) |
-| DELETE | `/cache/clear` | Limpa todas as chaves de cache |
-| GET | `/redoc` | Documentação alternativa em interface ReDoc |
+| POST | `/nlp/sentiment` | Análise de sentimento |
+| POST | `/nlp/ner` | Reconhecimento de entidades |
+| POST | `/nlp/translate` | Tradução EN→PT |
+| POST | `/nlp/embeddings` | Vetor semântico (384 dim) |
 
-### Como o cache funciona
+### RAG (busca semântica)
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/rag/documents` | Adiciona documento indexado |
+| POST | `/rag/search` | Busca por similaridade |
+| GET | `/rag/stats` | Total de documentos |
 
-Todas as operações NLP (exceto embeddings) passam por cache antes de rodar o modelo:
+### Histórico e cache
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/history/` | Lista operações realizadas |
+| GET | `/cache/stats` | Estatísticas do Redis |
+| DELETE | `/cache/clear` | Limpa cache |
 
-1. Requisição chega com um texto
-2. API gera uma chave SHA256 do texto + operação
-3. Consulta o Redis:
-   - **Cache HIT** → retorna resultado armazenado (dezenas de ms)
-   - **Cache MISS** → roda o modelo, salva no Redis com TTL de 1h, retorna
+### Observabilidade
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/health/` | Health check |
+| GET | `/metrics` | Métricas Prometheus |
+| GET | `/docs` | Swagger UI |
+| GET | `/redoc` | ReDoc |
 
-Embeddings ficam fora do cache porque vetores de 384 dimensões ocupam muita memória e são pouco reutilizados.
+---
 
-### Exemplo prático — comparando com e sem cache
+## 📊 Métricas de performance
 
-```bash
-# Primeira chamada (roda o modelo)
-$ time curl -X POST http://localhost:8000/nlp/sentiment \
-    -H "Content-Type: application/json" \
-    -d '{"text": "I love this project!"}'
-{"text":"I love this project!","label":"positive","score":0.985}
-real    0m0,911s
+| Métrica | Valor |
+|---------|-------|
+| **Tamanho da imagem Docker** | 2.28 GB (**-76%** vs versão inicial) |
+| **Speedup com cache Redis** | ~18x (911ms → 49ms) |
+| **Modelos HuggingFace** | 4 (carregamento lazy) |
+| **Dimensões dos embeddings** | 384 |
+| **Testes automatizados** | 6 (pytest) |
+| **Cobertura CI** | Lint + Testes + Deploy |
+| **Tempo médio de CI** | ~1min 30s (com cache) |
+| **Uptime em produção** | 24/7 (Railway) |
 
-# Segunda chamada (vem do cache)
-$ time curl -X POST http://localhost:8000/nlp/sentiment \
-    -H "Content-Type: application/json" \
-    -d '{"text": "I love this project!"}'
-{"text":"I love this project!","label":"positive","score":0.985}
-real    0m0,049s
+---
 
-# Estatísticas do cache
-$ curl http://localhost:8000/cache/stats
-{"total_keys":1,"cache_hits":1,"cache_misses":1,"hit_rate":50.0}
-```
+## 🔮 Melhorias futuras
 
-### Workflow n8n
+- [ ] **Frontend SaaS** — aplicação consumindo esta API (projeto em planejamento)
+- [ ] **Integração Telegram Bot** — chatbot conectado via n8n (adiado para pós-deploy)
+- [ ] **Testes de integração** — rodar Postgres/Redis em containers no CI
+- [ ] **Rate limiting** — proteção contra abuso via Redis
+- [ ] **Autenticação JWT** — para endpoints sensíveis
+- [ ] **Volume persistente para modelos** no Railway (evitar re-download)
+- [ ] **Deploy multi-região** para menor latência
 
-O n8n roda em container separado e conversa com a API através do IP do gateway Docker. O workflow publicado "Análise de Sentimento" possui 3 nós:
-Testável via:
-```bash
-curl -X POST http://localhost:5678/webhook/analisar-sentimento \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Amazing NLP pipeline!"}'
-```
+---
 
-### Documentação enriquecida
+## 📜 Licença
 
-Duas interfaces de documentação estão disponíveis:
+Distribuído sob a licença MIT. Veja [LICENSE](LICENSE) para detalhes.
 
-- **`/docs`** — Swagger UI clássico, ótimo para testar endpoints interativamente
-- **`/redoc`** — ReDoc com layout de dois painéis, ótimo para leitura e apresentação
+---
 
-Ambas são geradas automaticamente a partir de docstrings, schemas Pydantic e metadados no código. Cada endpoint documenta:
+## 👤 Autor
 
-- Casos de uso e fluxo interno
-- Modelo HuggingFace utilizado
-- Códigos de resposta possíveis (200, 422, 500)
-- Exemplos prontos de request e response
+**Aline Lima**
 
-### CI automatizado
+- 🐙 GitHub: [@Aline12Lima](https://github.com/Aline12Lima)
+- 💼 LinkedIn: [Aline Lima] (https://www.linkedin.com/in/aline-lima-397a84202/)
+- 🐋 Docker Hub: [@aline12limaai](https://hub.docker.com/u/aline12limaai)
 
-A cada push (`main` ou `feature/**`), o GitHub Actions dispara:
+---
 
-- **Job Lint (ruff)** — verifica erros e formatação de código Python
+<div align="center">
 
-Regras configuradas no `pyproject.toml`:
-- Limite de 100 caracteres por linha
-- Imports ordenados automaticamente (isort)
-- Detecção de bugs comuns (bugbear)
-- Sintaxe moderna Python (`X | Y` em vez de `Optional[X]`)
+**Se este projeto te inspirou ou ajudou, considere dar uma ⭐!**
 
-Testes com pytest continuam sendo executados localmente via `docker compose exec api pytest app/tests/ -v` e serão expandidos no CI completo da Fase 4.
+Construído com ☕ + muita persistência através de bugs reais em produção.
 
-### Variáveis de ambiente adicionadas
-
-| Variável | Padrão | Descrição |
-|----------|--------|-----------|
-| `REDIS_URL` | `redis://redis:6379/0` | Conexão do cache Redis |
-
-### Itens da Fase 3 adiados
-
-- **Integração Telegram/Slack** — o Telegram apresentou limitações técnicas rodando localmente (n8n local não recebe callbacks públicos do Telegram). Será integrado após o deploy em produção da Fase 4, quando o n8n tiver URL pública acessível pelo bot
-
-### Notas técnicas
-
-- **Comunicação entre containers Docker distintos**: n8n e API rodam em redes Docker separadas. O n8n acessa a API através do IP do gateway Docker (`docker exec pipeline_n8n ip route | grep default`)
-- **Fluxo Git**: features são desenvolvidas em branches próprias (`feature/*`), commitadas com mensagens convencionais e mergeadas para main via fast-forward
-- **Chave de cache**: SHA256 do texto + operação. Evita chaves gigantes e resolve problemas com caracteres especiais/acentuação
+</div>
