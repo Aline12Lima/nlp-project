@@ -9,12 +9,6 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from app.config import settings
 from app.database.connection import engine
 from app.database.models import Base
-from app.models.hf_loader import (
-    get_embeddings_model,
-    get_ner_model,
-    get_sentiment_model,
-    get_translation_model,
-)
 from app.routers import cache, health, history, nlp, rag
 from app.services.chroma_service import get_chroma_client
 from app.services.redis_service import get_redis_client
@@ -75,10 +69,7 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     logger.info("Tabelas prontas.")
 
-    get_sentiment_model()
-    get_ner_model()
-    get_translation_model()
-    get_embeddings_model()
+    # Modelos carregados sob demanda (lazy) para economizar RAM no startup
     get_chroma_client()
     get_redis_client()
     yield
