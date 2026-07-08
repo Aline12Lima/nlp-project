@@ -98,38 +98,65 @@ curl -X POST https://nlp-project-production-4cc9.up.railway.app/nlp/sentiment \
 - **[n8n](https://n8n.io/)** — workflows visuais integrando a API
 
 ---
-
 ## 🏗️ Arquitetura
-┌─────────────────────────────────────────────────────┐
-│              🌐 FastAPI (0.0.0.0:8000)              │
-│  ┌──────────┬──────────┬────────┬──────┬────────┐   │
-│  │   NLP    │   RAG    │History │Cache │ Health │   │
-│  │ router   │ router   │ router │router│ router │   │
-│  └────┬─────┴────┬─────┴───┬────┴──┬───┴────────┘   │
-│       │          │         │       │                │
-│  ┌────▼──────────▼─────────▼───────▼─────┐          │
-│  │  Serviços (chroma, redis, history)    │          │
-│  └────┬──────────┬─────────┬─────────────┘          │
-│       │          │         │                        │
-└───────┼──────────┼─────────┼────────────────────────┘
-│          │         │
-┌────▼──┐   ┌──▼───┐  ┌──▼────┐
-│Chroma │   │Redis │  │Postgres│
-│  DB   │   │Cache │  │  DB   │
-└───────┘   └──────┘  └───────┘
-↑
-│ Ingestão de docs
-│
-┌────┴───────┐
-│ Embeddings │
-│ HuggingFace│
-└────────────┘
-**3 containers Docker orquestrados:**
-- `api` — FastAPI + Uvicorn + 4 modelos HuggingFace + ChromaDB embarcado
-- `postgres` — PostgreSQL 16 para histórico de operações
-- `redis` — Redis 7 para cache em memória
 
----
+```mermaid
+graph TB
+    Client[👤 Cliente / Usuário]
+    
+    subgraph API["🐳 Container API - FastAPI"]
+        NLP[📝 Router NLP]
+        RAG[🔍 Router RAG]
+        HIST[📚 Router History]
+        CACHE[⚡ Router Cache]
+        HEALTH[❤️ Router Health]
+        
+        SERVICES[🔧 Services Layer<br/>chroma_service · redis_service · history_service]
+        
+        MODELS[🤖 4 Modelos HuggingFace<br/>Sentiment · NER · Translation · Embeddings]
+        
+        CHROMA_EMB[(💾 ChromaDB<br/>embarcado)]
+    end
+    
+    subgraph DB["🐳 Container PostgreSQL"]
+        POSTGRES[(🗄️ PostgreSQL 16<br/>Histórico)]
+    end
+    
+    subgraph CACHE_C["🐳 Container Redis"]
+        REDIS[(⚡ Redis 7<br/>Cache com TTL)]
+    end
+    
+    Client -->|HTTP REST| NLP
+    Client -->|HTTP REST| RAG
+    Client -->|HTTP REST| HIST
+    Client -->|HTTP REST| CACHE
+    Client -->|HTTP REST| HEALTH
+    
+    NLP --> SERVICES
+    RAG --> SERVICES
+    HIST --> SERVICES
+    CACHE --> SERVICES
+    
+    NLP --> MODELS
+    RAG --> MODELS
+    
+    SERVICES --> CHROMA_EMB
+    SERVICES --> POSTGRES
+    SERVICES --> REDIS
+    
+    style Client fill:#4A90E2,color:#fff
+    style API fill:#1a1a2e,color:#fff
+    style DB fill:#336791,color:#fff
+    style CACHE_C fill:#DC382D,color:#fff
+    style MODELS fill:#FFB800,color:#000
+```
+
+**3 containers Docker orquestrados via docker-compose:**
+
+- 🐍 **api** — FastAPI + Uvicorn + 4 modelos HuggingFace + ChromaDB embarcado
+- 🐘 **postgres** — PostgreSQL 16 para histórico de operações
+- 🔴 **redis** — Redis 7 para cache em memória (TTL 1h)
+
 
 ## 📸 Interface e visualização
 
